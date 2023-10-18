@@ -14,6 +14,7 @@ const canvas = document.createElement("canvas");
 canvas.width = 256;
 canvas.height = 256;
 canvas.style.border = "6px solid #000000";
+canvas.style.border = "6px solid #000000";
 canvas.style.borderRadius = "16px";
 canvas.style.boxShadow = "5px 5px 10px rgba(0, 0, 0, .5)";
 app.append(canvas);
