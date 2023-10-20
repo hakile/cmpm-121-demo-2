@@ -2,7 +2,8 @@ import "./style.css";
 
 const app: HTMLDivElement = document.querySelector("#app")!;
 
-const gameName = "Harrison's Game";
+const gameName = "Harrison's Sketchpad";
+const event = new Event("drawing-changed");
 
 document.title = gameName;
 
@@ -21,33 +22,39 @@ app.append(canvas);
 
 const ctx = canvas.getContext("2d")!;
 const origin = 0;
+
+let points: number[][][] = [[[]]];
+let curInd = 0;
+
 clearCanvas();
 
-const bounds = canvas.getBoundingClientRect();
-const offset = 10;
-
-let lastX = 0;
-let lastY = 0;
-
 let mouseDown = false;
-canvas.onmousedown = function (mouse) {
+canvas.onmousedown = function () {
   mouseDown = true;
-  lastX = mouse.clientX - bounds.left - offset;
-  lastY = mouse.clientY - bounds.top + offset;
 };
 canvas.onmouseup = function () {
-  mouseDown = false;
+  if (mouseDown) {
+    mouseDown = false;
+    curInd++;
+    points[curInd] = [[]];
+  }
 };
+canvas.addEventListener("drawing-changed", () => {
+  for (const line of points) {
+    for (let i = 1; i < line.length; i++) {
+      ctx.beginPath();
+      ctx.moveTo(line[i - 1][0], line[i - 1][1]);
+      ctx.lineTo(line[i][0], line[i][1]);
+      ctx.closePath();
+      ctx.stroke();
+    }
+  }
+});
 canvas.addEventListener("mousemove", (mouse) => {
   if (mouseDown) {
-    console.log("eh");
-    const curX: number = mouse.clientX - bounds.left - offset;
-    const curY: number = mouse.clientY - bounds.top + offset;
-    ctx.moveTo(lastX, lastY);
-    ctx.lineTo(curX, curY);
-    ctx.stroke();
-    lastX = curX;
-    lastY = curY;
+    const newCoords: number[] = [mouse.offsetX, mouse.offsetY];
+    points[curInd].push(newCoords);
+    canvas.dispatchEvent(event);
   }
 });
 
@@ -55,15 +62,16 @@ app.append(document.createElement("div"));
 
 const clearButton = document.createElement("button");
 clearButton.innerHTML = "Clear";
-clearButton.addEventListener("click", clearCanvas);
+clearButton.addEventListener("click", () => clearCanvas());
 app.append(clearButton);
 
 function clearCanvas() {
   ctx.clearRect(origin, origin, canvas.width, canvas.height);
-  ctx.beginPath();
   ctx.fillStyle = "white";
   ctx.fillRect(origin, origin, canvas.width, canvas.height);
   ctx.fillStyle = "black";
+  points = [[[]]];
+  curInd = 0;
 }
 
-console.log("Step 2");
+console.log("Step 3");
