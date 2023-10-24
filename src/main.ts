@@ -25,11 +25,22 @@ class MarkerLine {
   }
 }
 
+class CustomCursor {
+  coords: Point = { x: 0, y: 0 };
+
+  draw(ctx: CanvasRenderingContext2D): void {
+    canvas.dispatchEvent(drawEvent);
+    ctx.fillRect(this.coords.x, this.coords.y, curWidth + 3, curWidth + 3);
+  }
+}
+
 const app: HTMLDivElement = document.querySelector("#app")!;
 
 const gameName = "Harrison's Sketchpad";
 const drawEvent = new Event("drawing-changed");
+const toolMovedEvent = new Event("tool-moved");
 const buttons: HTMLButtonElement[] = [];
+const cCursor = new CustomCursor();
 let selectedMarker: HTMLButtonElement;
 
 const undoButton = makeButton("Undo", () => {
@@ -86,6 +97,7 @@ canvas.height = 256;
 canvas.style.border = "6px solid #000000";
 canvas.style.borderRadius = "16px";
 canvas.style.boxShadow = "5px 5px 10px rgba(0, 0, 0, .5)";
+canvas.style.cursor = "none";
 app.append(canvas);
 
 const ctx = canvas.getContext("2d")!;
@@ -95,8 +107,8 @@ let lines: MarkerLine[] = [];
 let redos: MarkerLine[] = [];
 let curInd = 0;
 let curWidth = 1;
-
 let mouseDown = false;
+
 canvas.onmousedown = function () {
   if (!mouseDown) {
     lines[curInd] = new MarkerLine();
@@ -110,6 +122,7 @@ canvas.onmousedown = function () {
     selectedMarker.style.color = "#408040";
   }
 };
+
 canvas.onmouseup = function () {
   if (mouseDown) {
     mouseDown = false;
@@ -125,17 +138,26 @@ canvas.onmouseup = function () {
     redos = [];
   }
 };
+
 canvas.addEventListener("drawing-changed", () => {
   clearCanvas(false);
   lines.forEach((line) => {
     line.display(ctx);
   });
 });
+
+canvas.addEventListener("tool-moved", () => {
+  cCursor.draw(ctx);
+});
+
 canvas.addEventListener("mousemove", (mouse) => {
+  const coords: Point = { x: mouse.offsetX, y: mouse.offsetY };
+  cCursor.coords = coords;
   if (mouseDown) {
-    const newCoords: Point = { x: mouse.offsetX, y: mouse.offsetY };
-    lines[curInd].addPoint(newCoords);
+    lines[curInd].addPoint(coords);
     canvas.dispatchEvent(drawEvent);
+  } else {
+    canvas.dispatchEvent(toolMovedEvent);
   }
 });
 
@@ -173,4 +195,4 @@ function clearCanvas(clearLines: boolean): void {
   }
 }
 
-console.log("Step 6");
+console.log("Step 7");
