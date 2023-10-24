@@ -7,6 +7,7 @@ interface Point {
 
 class MarkerLine {
   points: Point[] = [];
+  width = 1;
 
   addPoint(point: Point): void {
     this.points.push(point);
@@ -15,6 +16,7 @@ class MarkerLine {
   display(ctx: CanvasRenderingContext2D): void {
     for (let i = 1; i < this.points.length; i++) {
       ctx.beginPath();
+      ctx.lineWidth = this.width;
       ctx.moveTo(this.points[i - 1].x, this.points[i - 1].y);
       ctx.lineTo(this.points[i].x, this.points[i].y);
       ctx.closePath();
@@ -27,12 +29,12 @@ const app: HTMLDivElement = document.querySelector("#app")!;
 
 const gameName = "Harrison's Sketchpad";
 const drawEvent = new Event("drawing-changed");
+const buttons: HTMLButtonElement[] = [];
+let selectedMarker: HTMLButtonElement;
 
 const undoButton = makeButton("Undo", () => {
   if (lines.length > 0) {
-    // lines.pop();
     const line = lines.pop();
-    // lines.push(new MarkerLine());
     redos.push(line!);
     curInd--;
     canvas.dispatchEvent(drawEvent);
@@ -46,10 +48,8 @@ const clearButton = makeButton("Clear", () => clearCanvas(true));
 
 const redoButton = makeButton("Redo", () => {
   if (redos.length > 0) {
-    // lines.pop();
     const line = redos.pop();
     lines.push(line!);
-    // lines.push(new MarkerLine());
     curInd++;
     canvas.dispatchEvent(drawEvent);
     undoButton.disabled = false;
@@ -57,6 +57,22 @@ const redoButton = makeButton("Redo", () => {
   }
 });
 redoButton.disabled = true;
+
+const thinButton = makeButton("Thin", () => {
+  curWidth = 1;
+  selectedMarker = thinButton;
+  thinButton.style.color = "#80FF80";
+  thickButton.style.color = "#FFFFFF";
+});
+thinButton.style.color = "#80FF80";
+selectedMarker = thinButton;
+
+const thickButton = makeButton("Thick", () => {
+  curWidth = 5;
+  selectedMarker = thickButton;
+  thickButton.style.color = "#80FF80";
+  thinButton.style.color = "#FFFFFF";
+});
 
 document.title = gameName;
 
@@ -78,22 +94,35 @@ const origin = 0;
 let lines: MarkerLine[] = [];
 let redos: MarkerLine[] = [];
 let curInd = 0;
+let curWidth = 1;
 
 let mouseDown = false;
 canvas.onmousedown = function () {
   if (!mouseDown) {
     lines[curInd] = new MarkerLine();
+    lines[curInd].width = curWidth;
     mouseDown = true;
-    undoButton.disabled = true;
+    buttons.forEach((b) => {
+      b.disabled = true;
+    });
+    thinButton.style.color = "#808080";
+    thickButton.style.color = "#808080";
+    selectedMarker.style.color = "#408040";
   }
 };
 canvas.onmouseup = function () {
   if (mouseDown) {
     mouseDown = false;
     curInd++;
-    undoButton.disabled = false;
+    buttons.forEach((b) => {
+      if (b != redoButton) {
+        b.disabled = false;
+      }
+    });
+    thinButton.style.color = "#FFF";
+    thickButton.style.color = "#FFF";
+    selectedMarker.style.color = "#80FF80";
     redos = [];
-    redoButton.disabled = true;
   }
 };
 canvas.addEventListener("drawing-changed", () => {
@@ -116,12 +145,18 @@ app.append(undoButton);
 app.append(clearButton);
 app.append(redoButton);
 
+app.append(document.createElement("div"));
+
+app.append(thinButton);
+app.append(thickButton);
+
 clearCanvas(true);
 
 function makeButton(name: string, callback: () => void): HTMLButtonElement {
   const newButton = document.createElement("button");
   newButton.innerHTML = name;
   newButton.addEventListener("click", () => callback());
+  buttons.push(newButton);
   return newButton;
 }
 
@@ -131,11 +166,11 @@ function clearCanvas(clearLines: boolean): void {
   ctx.fillRect(origin, origin, canvas.width, canvas.height);
   ctx.fillStyle = "black";
   if (clearLines) {
-    lines = [new MarkerLine()];
+    lines = [];
     undoButton.disabled = true;
     redoButton.disabled = true;
     curInd = 0;
   }
 }
 
-console.log("Step 5");
+console.log("Step 6");
