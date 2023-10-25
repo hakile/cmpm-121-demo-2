@@ -17,9 +17,9 @@ class MarkerLine {
     for (let i = 1; i < this.points.length; i++) {
       ctx.beginPath();
       ctx.lineWidth = this.size;
+      ctx.lineCap = "round";
       ctx.moveTo(this.points[i - 1].x, this.points[i - 1].y);
       ctx.lineTo(this.points[i].x, this.points[i].y);
-      ctx.closePath();
       ctx.stroke();
     }
   }
@@ -91,6 +91,26 @@ const redoButton = makeButton("Redo", () => {
   }
 });
 redoButton.disabled = true;
+
+const exportButton = makeButton("Export", () => {
+  const bigCanvas = document.createElement("canvas");
+  bigCanvas.width = 1024;
+  bigCanvas.height = 1024;
+
+  const newCtx = bigCanvas.getContext("2d")!;
+  newCtx.scale(4, 4);
+  newCtx.font = "30px Arial";
+
+  clearCanvas(false, newCtx);
+  actions.forEach((action) => {
+    action.display(newCtx);
+  });
+
+  const anchor = document.createElement("a");
+  anchor.href = bigCanvas.toDataURL("image/png");
+  anchor.download = "sketchpad.png";
+  anchor.click();
+});
 
 const thinButton = makeButton(
   "Thin",
@@ -215,15 +235,15 @@ canvas.addEventListener("mousemove", (mouse) => {
 });
 
 canvas.addEventListener("mouseout", () => {
-  clearCanvas();
   canvas.dispatchEvent(drawEvent);
 });
 
 app.append(document.createElement("div"));
 
 app.append(undoButton);
-app.append(clearButton);
 app.append(redoButton);
+app.append(clearButton);
+app.append(exportButton);
 
 app.append(document.createElement("div"));
 
@@ -276,11 +296,15 @@ function makeStickerButton(sticker: string) {
   return newSticker;
 }
 
-function clearCanvas(fullClear?: boolean): void {
-  ctx.clearRect(origin, origin, canvas.width, canvas.height);
-  ctx.fillStyle = "white";
-  ctx.fillRect(origin, origin, canvas.width, canvas.height);
-  ctx.fillStyle = "black";
+function clearCanvas(
+  fullClear?: boolean,
+  context?: CanvasRenderingContext2D
+): void {
+  if (context == null) context = ctx;
+  context.clearRect(origin, origin, canvas.width, canvas.height);
+  context.fillStyle = "white";
+  context.fillRect(origin, origin, canvas.width, canvas.height);
+  context.fillStyle = "black";
   if (fullClear) {
     actions = [];
     undoButton.disabled = true;
@@ -289,4 +313,4 @@ function clearCanvas(fullClear?: boolean): void {
   }
 }
 
-console.log("Step 9");
+console.log("Step 10");
