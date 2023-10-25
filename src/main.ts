@@ -122,47 +122,17 @@ const thickButton = makeButton(
   true
 );
 
-const sticker1 = makeButton(
-  "😀",
-  () => {
-    cCursor.cursorEmote = "😀";
-    selectedTool = sticker1;
-    cCursor.cursorType = "emoji";
-    toolButtons.forEach((button) => {
-      button.style.borderColor = "";
-    });
-    selectedTool.style.borderColor = "#80FF80";
-  },
-  true
-);
+const sticker1 = makeStickerButton("😀");
+const sticker2 = makeStickerButton("😐");
+const sticker3 = makeStickerButton("🙁");
 
-const sticker2 = makeButton(
-  "😐",
-  () => {
-    cCursor.cursorEmote = "😐";
-    selectedTool = sticker2;
-    cCursor.cursorType = "emoji";
-    toolButtons.forEach((button) => {
-      button.style.borderColor = "";
-    });
-    selectedTool.style.borderColor = "#80FF80";
-  },
-  true
-);
-
-const sticker3 = makeButton(
-  "🙁",
-  () => {
-    cCursor.cursorEmote = "🙁";
-    selectedTool = sticker3;
-    cCursor.cursorType = "emoji";
-    toolButtons.forEach((button) => {
-      button.style.borderColor = "";
-    });
-    selectedTool.style.borderColor = "#80FF80";
-  },
-  true
-);
+const customStickerButton = makeButton("Make Custom Sticker", () => {
+  const stickerText = prompt("Custom sticker text:", "");
+  if (stickerText != null && stickerText != "") {
+    const newSticker = makeStickerButton(stickerText);
+    app.append(newSticker);
+  }
+});
 
 document.title = gameName;
 
@@ -262,9 +232,15 @@ app.append(thickButton);
 
 app.append(document.createElement("div"));
 
+app.append(customStickerButton);
+
+app.append(document.createElement("div"));
+
 app.append(sticker1);
 app.append(sticker2);
 app.append(sticker3);
+
+app.append(document.createElement("div"));
 
 clearCanvas(true);
 
@@ -283,6 +259,23 @@ function makeButton(
   return newButton;
 }
 
+function makeStickerButton(sticker: string) {
+  const newSticker = makeButton(
+    sticker,
+    () => {
+      cCursor.cursorEmote = sticker;
+      selectedTool = newSticker;
+      cCursor.cursorType = "emoji";
+      toolButtons.forEach((button) => {
+        button.style.borderColor = "";
+      });
+      selectedTool.style.borderColor = "#80FF80";
+    },
+    true
+  );
+  return newSticker;
+}
+
 function clearCanvas(fullClear?: boolean): void {
   ctx.clearRect(origin, origin, canvas.width, canvas.height);
   ctx.fillStyle = "white";
@@ -296,4 +289,4 @@ function clearCanvas(fullClear?: boolean): void {
   }
 }
 
-console.log("Step 8");
+console.log("Step 9");
