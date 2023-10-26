@@ -1,5 +1,7 @@
 import "./style.css";
 
+const sizeFactor = 0.15;
+
 interface Point {
   x: number;
   y: number;
@@ -35,6 +37,12 @@ class Sticker {
   }
 
   display(ctx: CanvasRenderingContext2D): void {
+    const trueSize = Math.min(
+      30,
+      (30 * Math.pow(3, sizeFactor)) /
+        Math.pow(this.stickerText.length, sizeFactor)
+    );
+    ctx.font = `${trueSize}px Arial`;
     ctx.fillText(this.stickerText, this.coord.x, this.coord.y);
   }
 }
@@ -44,13 +52,19 @@ type CType = "marker" | "emoji";
 class CustomCursor {
   coords: Point = { x: 0, y: 0 };
   cursorType: CType = "marker";
-  cursorEmote = "";
+  cursorEmote = " ";
 
   draw(ctx: CanvasRenderingContext2D): void {
     canvas.dispatchEvent(drawEvent);
     if (this.cursorType == "marker") {
       ctx.fillRect(this.coords.x, this.coords.y, curWidth + 3, curWidth + 3);
     } else {
+      const size = Math.min(
+        30,
+        (30 * Math.pow(3, sizeFactor)) /
+          Math.pow(this.cursorEmote.length, sizeFactor)
+      );
+      ctx.font = `${size}px Arial`;
       ctx.fillText(this.cursorEmote, this.coords.x, this.coords.y);
     }
   }
@@ -99,7 +113,6 @@ const exportButton = makeButton("Export", () => {
 
   const newCtx = bigCanvas.getContext("2d")!;
   newCtx.scale(4, 4);
-  newCtx.font = "30px Arial";
 
   clearCanvas(false, newCtx);
   actions.forEach((action) => {
