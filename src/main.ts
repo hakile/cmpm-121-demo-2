@@ -1,6 +1,9 @@
 import "./style.css";
 
 const sizeFactor = 0.15;
+let randColor = hsv2rgb(Math.random() * 360, 1, 0.875);
+console.log(randColor);
+let randRotate = 2 * Math.random() - 1;
 
 interface Point {
   x: number;
@@ -10,12 +13,15 @@ interface Point {
 class MarkerLine {
   points: Point[] = [];
   size = 1;
+  color = randColor;
+  rotation = 0;
 
   addPoint(point: Point): void {
     this.points.push(point);
   }
 
   display(ctx: CanvasRenderingContext2D): void {
+    ctx.strokeStyle = this.color;
     for (let i = 1; i < this.points.length; i++) {
       ctx.beginPath();
       ctx.lineWidth = this.size;
@@ -31,19 +37,26 @@ class Sticker {
   coord: Point = { x: 0, y: 0 };
   stickerText = "";
   size = 30;
+  color = "";
+  rotation = randRotate;
 
   addPoint(): void {
     return;
   }
 
   display(ctx: CanvasRenderingContext2D): void {
+    ctx.fillStyle = "#000";
     const trueSize = Math.min(
       30,
       (30 * Math.pow(3, sizeFactor)) /
         Math.pow(this.stickerText.length, sizeFactor)
     );
     ctx.font = `${trueSize}px Arial`;
-    ctx.fillText(this.stickerText, this.coord.x, this.coord.y);
+    ctx.translate(this.coord.x, this.coord.y);
+    ctx.rotate(this.rotation);
+    ctx.fillText(this.stickerText, 0, 0);
+    ctx.rotate(-this.rotation);
+    ctx.translate(-this.coord.x, -this.coord.y);
   }
 }
 
@@ -59,13 +72,18 @@ class CustomCursor {
     if (this.cursorType == "marker") {
       ctx.fillRect(this.coords.x, this.coords.y, curWidth + 3, curWidth + 3);
     } else {
+      ctx.fillStyle = "#000";
       const size = Math.min(
         30,
         (30 * Math.pow(3, sizeFactor)) /
           Math.pow(this.cursorEmote.length, sizeFactor)
       );
       ctx.font = `${size}px Arial`;
-      ctx.fillText(this.cursorEmote, this.coords.x, this.coords.y);
+      ctx.translate(this.coords.x, this.coords.y);
+      ctx.rotate(randRotate);
+      ctx.fillText(this.cursorEmote, 0, 0);
+      ctx.rotate(-randRotate);
+      ctx.translate(-this.coords.x, -this.coords.y);
     }
   }
 }
@@ -78,7 +96,6 @@ const toolMovedEvent = new Event("tool-moved");
 const buttons: HTMLButtonElement[] = [];
 const toolButtons: HTMLButtonElement[] = [];
 const cCursor = new CustomCursor();
-let selectedTool: HTMLButtonElement;
 
 const undoButton = makeButton("Undo", () => {
   if (actions.length > 0) {
@@ -106,7 +123,7 @@ const redoButton = makeButton("Redo", () => {
 });
 redoButton.disabled = true;
 
-const exportButton = makeButton("Export", () => {
+const exportButton = makeButton("Save", () => {
   const bigCanvas = document.createElement("canvas");
   bigCanvas.width = 1024;
   bigCanvas.height = 1024;
@@ -126,31 +143,30 @@ const exportButton = makeButton("Export", () => {
 });
 
 const thinButton = makeButton(
-  "Thin",
+  "1px",
   () => {
     curWidth = 1;
-    selectedTool = thinButton;
     cCursor.cursorType = "marker";
+    randColor = hsv2rgb(Math.random() * 360, 1, 0.875);
     toolButtons.forEach((button) => {
       button.style.borderColor = "";
     });
-    selectedTool.style.borderColor = "#80FF80";
+    thinButton.style.borderColor = "#80FF80";
   },
   true
 );
-selectedTool = thinButton;
-selectedTool.style.borderColor = "#80FF80";
+thinButton.style.borderColor = "#80FF80";
 
 const thickButton = makeButton(
-  "Thick",
+  "5px",
   () => {
     curWidth = 5;
-    selectedTool = thickButton;
     cCursor.cursorType = "marker";
+    randColor = hsv2rgb(Math.random() * 360, 1, 0.875);
     toolButtons.forEach((button) => {
       button.style.borderColor = "";
     });
-    selectedTool.style.borderColor = "#80FF80";
+    thickButton.style.borderColor = "#80FF80";
   },
   true
 );
@@ -184,7 +200,6 @@ app.append(canvas);
 
 const ctx = canvas.getContext("2d")!;
 ctx.font = "30px Arial";
-const origin = 0;
 
 let actions: (MarkerLine | Sticker)[] = [];
 let redos: (MarkerLine | Sticker)[] = [];
@@ -212,6 +227,11 @@ canvas.onmousedown = function (mouse) {
 
 canvas.onmouseup = function () {
   if (mouseDown) {
+    if (cCursor.cursorType == "marker") {
+      randColor = hsv2rgb(Math.random() * 360, 1, 0.875);
+    } else {
+      randRotate = 2 * Math.random() - 1;
+    }
     mouseDown = false;
     curInd++;
     buttons.forEach((b) => {
@@ -296,13 +316,13 @@ function makeStickerButton(sticker: string) {
   const newSticker = makeButton(
     sticker,
     () => {
+      randRotate = 2 * Math.random() - 1;
       cCursor.cursorEmote = sticker;
-      selectedTool = newSticker;
       cCursor.cursorType = "emoji";
       toolButtons.forEach((button) => {
         button.style.borderColor = "";
       });
-      selectedTool.style.borderColor = "#80FF80";
+      newSticker.style.borderColor = "#80FF80";
     },
     true
   );
@@ -314,10 +334,11 @@ function clearCanvas(
   context?: CanvasRenderingContext2D
 ): void {
   if (context == null) context = ctx;
-  context.clearRect(origin, origin, canvas.width, canvas.height);
+  context.clearRect(0, 0, canvas.width, canvas.height);
   context.fillStyle = "white";
-  context.fillRect(origin, origin, canvas.width, canvas.height);
-  context.fillStyle = "black";
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.fillStyle = randColor;
+  context.strokeStyle = randColor;
   if (fullClear) {
     actions = [];
     undoButton.disabled = true;
@@ -326,4 +347,11 @@ function clearCanvas(
   }
 }
 
-console.log("Step 10");
+function hsv2rgb(h: number, s: number, v: number) {
+  // Original code by Kamil Kiełczewski
+  const f = (n: number, k = (n + h / 60) % 6) =>
+    v - v * s * Math.max(Math.min(k, 4 - k, 1), 0);
+  return `rgb(${f(5) * 255}, ${f(3) * 255}, ${f(1) * 255})`;
+}
+
+console.log("Step 12");
